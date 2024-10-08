@@ -1,0 +1,232 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#ifndef APSTUDIO_INVOKED
+#include "targetver.h"
+#endif
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ZXDUMP            ICON                    "zxdump.ico"
+
+IDI_SMALL               ICON                    "ZX81small.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDI_OPEN                BITMAP                  "file_open.bmp"
+
+IDI_REFRESH             BITMAP                  "refresh.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 6,5,0,1008
+ PRODUCTVERSION 6,5,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0xbL
+#else
+ FILEFLAGS 0xaL
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904e4"
+        BEGIN
+            VALUE "CompanyName", "Vegagak"
+            VALUE "FileDescription", "ZX81 HexDump"
+            VALUE "FileVersion", "6.5"
+            VALUE "InternalName", "ZxDump"
+            VALUE "LegalCopyright", "UNLICENSE David Gonzales 2024"
+            VALUE "OriginalFilename", "zxdump.exe"
+            VALUE "ProductName", "ZX81 HexDump"
+            VALUE "ProductVersion", "6.5"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDC_ZXDUMP MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open File\tCtrl+O",          IDM_MENU_OPEN
+        MENUITEM "&Re-process",                 IDM_MENU_REPROCESS, GRAYED
+        MENUITEM "&Export\tCtrl+E",             IDM_MENU_EXPORT, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Settings"
+    BEGIN
+        MENUITEM "&Courier Font",               IDM_MENU_CN
+        MENUITEM "Z&X81 Font",                  IDM_MENU_ZX
+        MENUITEM SEPARATOR
+        MENUITEM "&Small Font",                 IDM_MENU_SML
+        MENUITEM "&Medium Font",                IDM_MENU_MED, CHECKED
+        MENUITEM "&Large Font",                 IDM_MENU_LRG
+    END
+    POPUP "&Visualize"
+    BEGIN
+        MENUITEM "Scan for Alternate Display Files", ID_MODIFY_TEST
+    END
+    POPUP "&About"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDC_ZXDUMP ACCELERATORS
+BEGIN
+    "/",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "?",            IDM_ABOUT,              ASCII,  ALT, NOINVERT
+    "Q",            IDM_EXIT,               VIRTKEY, CONTROL, NOINVERT
+    "W",            IDM_EXIT,               VIRTKEY, CONTROL, NOINVERT
+    "E",            IDM_MENU_EXPORT,        VIRTKEY, CONTROL, NOINVERT
+    "S",            IDM_MENU_EXPORT,        VIRTKEY, CONTROL, NOINVERT
+    "O",            IDM_MENU_OPEN,          VIRTKEY, CONTROL, NOINVERT
+    VK_F5,          IDM_MENU_REPROCESS,     VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 200, 162
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About ZX81 HexDump"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "ZX81 HexDump, Version 6.5",IDC_STATIC,28,13,114,8,SS_NOPREFIX
+    LTEXT           "David Gonzales 1994-2024",IDC_STATIC,27,24,144,8
+    DEFPUSHBUTTON   "OK",IDOK,27,140,50,14,WS_GROUP
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 174
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 154
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#ifndef APSTUDIO_INVOKED\r\n"
+    "#include ""targetver.h""\r\n"
+    "#endif\r\n"
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    IDS_APP_TITLE           "ZX81 HexDump 6.5"
+    IDC_ZXDUMP            "ZXDUMP"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
