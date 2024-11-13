@@ -1,4 +1,4 @@
-# ZX81 HexDump - a programmers app
+# ZX81 HexDump for Windows - a programmers app
 
 ZX81 HexDump is a developer's utility for Sinclair ZX81 .P file programs. Used for display and analysis of binary data of the ZX81 program &mdash; including System Variables, BASIC program, Display File and BASIC variables). A file with .P extension is a tape image in byte format, converted from an original Sinclair ZX81 tape recording or created new with modern tools. The .P file can be sent out a big computer's sound card to the actual ZX81 hardware, or the .P file can be run in an emulator
 
@@ -6,7 +6,7 @@ ZX81 HexDump is a developer's utility for Sinclair ZX81 .P file programs. Used f
 * Supports <a href='https://www.bing.com/search?q=Sinclair+ZX81'>Sinclair ZX81</a>/Timex Sinclair 1000 home computer .P files
 * Supports the derivative clone computers Lambda 8300/Power 3000/Marathon .P files
 
-## ZX81 HexDump 6.5 (2024) Features:
+## ZX81 HexDump 6.5a (2024 November) Features:
 * Win32 app coded in C++ using Visual Studio 2022
 * App for Windows 11/Windows 10/Windows 8.1. May work with Windows 7 and Windows 8
 * Generates a traditional hexdump-style output: hexadecimal display along with columns showing the ZX81 character set and the ASCII character set
@@ -17,7 +17,7 @@ ZX81 HexDump is a developer's utility for Sinclair ZX81 .P file programs. Used f
 |:-:|:-:|
 |![Screenshot #1](./images/33-columns.png?raw=true)|![Screenshot #2](./images/32-columns.png?raw=true)|
 
-* adjustable starting address for display. A ZX81 tape image always start at address 0x4009
+* adjustable starting address for display. A ZX81 tape image always start at address 0x4009, but if you want to view, for example, the Display section, you can enter a different address
 
 |display starting at program beginning|starting address adjusted to align with subset of data|
 |:-:|:-:|
@@ -28,7 +28,7 @@ ZX81 HexDump is a developer's utility for Sinclair ZX81 .P file programs. Used f
 
 ## Find Display Files
 * Have you ever suspected a ZX81 program is using pre-rendered screen displays? This tool may find them in the program's machine code
-![Displays screen data](./images/Alternate_display_files.png)
+<br>![Displays screen data](./images/Alternate_display_files.png)
 * Visualize app screens and game levels: this feature searches for alternative display files
 * Automatically detects and sizes the embedded Display File(s). Some games use the standard 33-byte wide display, other use smaller displays like the 26-column image shown
 * Supports ZX81 & Lambda 8300 files
@@ -43,7 +43,6 @@ Contributions welcome. Requests considered
 
 To do items (not implemented):
 * Allow entering of System Variable names in the address box (e.g. VARS or DFILE) and have the hexdump start at that address. The header file 'zx81s.h' has the names and addresses
-* On pressing ENTER after typing in a Columns or Address number, have the display update without having the click the Reprocess(Refresh) button
 
 Stretch feature goal to implement: use a hover balloon or tooltip-style popup appear when the mouse is over a byte, showing more information. Examples:
 * Keywords: when over the byte 0xEA it would show the keyword "REM"
