@@ -10,6 +10,7 @@ HWND g_hWnd;
 extern HWND g_hwndStartAddr;
 extern HWND g_hwndColumns;
 
+
 char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns , WORD address, BOOL bShowStatus);
 char* hexdump (BYTE* inputstring,size_t ccin, size_t* lpccout,char* szFileName);
 BYTE GetSysByte(WORD _offset, BYTE* p_stream);

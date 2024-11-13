@@ -70,12 +70,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Vegagak"
             VALUE "FileDescription", "ZX81 HexDump"
-            VALUE "FileVersion", "6.5"
+            VALUE "FileVersion", "6.5a"
             VALUE "InternalName", "ZxDump"
             VALUE "LegalCopyright", "UNLICENSE David Gonzales 2024"
             VALUE "OriginalFilename", "zxdump.exe"
             VALUE "ProductName", "ZX81 HexDump"
-            VALUE "ProductVersion", "6.5"
+            VALUE "ProductVersion", "6.5a"
         END
     END
     BLOCK "VarFileInfo"
@@ -102,12 +102,14 @@ BEGIN
     END
     POPUP "&Settings"
     BEGIN
-        MENUITEM "&Courier Font",               IDM_MENU_CN
-        MENUITEM "Z&X81 Font",                  IDM_MENU_ZX
+            MENUITEM "Re&set address\tESC",     IDM_MENU_RESET
         MENUITEM SEPARATOR
-        MENUITEM "&Small Font",                 IDM_MENU_SML
-        MENUITEM "&Medium Font",                IDM_MENU_MED, CHECKED
-        MENUITEM "&Large Font",                 IDM_MENU_LRG
+            MENUITEM "&Courier Font",           IDM_MENU_CN
+            MENUITEM "Z&X81 Font",              IDM_MENU_ZX
+        MENUITEM SEPARATOR
+            MENUITEM "&Small Font",             IDM_MENU_SML
+            MENUITEM "&Medium Font",            IDM_MENU_MED, CHECKED
+            MENUITEM "&Large Font",             IDM_MENU_LRG
     END
     POPUP "&Visualize"
     BEGIN
@@ -135,6 +137,8 @@ BEGIN
     "S",            IDM_MENU_EXPORT,        VIRTKEY, CONTROL, NOINVERT
     "O",            IDM_MENU_OPEN,          VIRTKEY, CONTROL, NOINVERT
     VK_F5,          IDM_MENU_REPROCESS,     VIRTKEY, NOINVERT
+    VK_RETURN,      IDM_MENU_REPROCESS,     VIRTKEY, NOINVERT
+    VK_ESCAPE,      IDM_MENU_RESET,         VIRTKEY, NOINVERT
 END
 
 
@@ -148,8 +152,8 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About ZX81 HexDump"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    LTEXT           "ZX81 HexDump, Version 6.5",IDC_STATIC,28,13,114,8,SS_NOPREFIX
-    LTEXT           "David Gonzales 1994-2024",IDC_STATIC,27,24,144,8
+    LTEXT           "ZX81 HexDump, Version 6.5a",IDC_STATIC,28,13,114,8,SS_NOPREFIX
+    LTEXT           "UNLICENSE David Gonzales 1994-2024",IDC_STATIC,27,24,144,8
     DEFPUSHBUTTON   "OK",IDOK,27,140,50,14,WS_GROUP
 END
 

@@ -7,7 +7,6 @@ extern HWND hWndExportName; // text window for status updates
 int FileExistCheckEx(HWND hWnd,WCHAR* szFileName);
 
 char (*code2ascii)[11];
-//charcodes *CHRcodes;
 WORD VARS =0;
 BYTE VERSN = 0;
 
@@ -171,14 +170,13 @@ size_t optionSizeHD(size_t rem_size)
 char* HexHeader2(WORD address, int columns)
 {
 	//e.g. for 33 columns: 
-	//"ADDR   0 1 2 3  4 5 6 7  8 9 A B  C D E F  0 1 2 3  4 5 6 7  8 9 A B  C D E F  0 ZX81                              ASCII\r\n"
+	//"ADDR  0 1 2 3  4 5 6 7  8 9 A B  C D E F  0 1 2 3  4 5 6 7  8 9 A B  C D E F  0 ZX81                              ASCII Character Set\r\n"
 	char hexd[]="0123456789ABCDEF";
-	//int cc = 68;
 	int dividers = columns / 4;
-	int cc = strlen("ADDR  ") + 2 * columns +strlen(" ZX81                               ASCII\r\n") + dividers + 1;
+	int cc = strlen("ADDR ") + 2 * columns +strlen(" ZX81                               ASCII Character Set\r\n") + dividers + 1 +12; //36col
 	char* hh = new char[cc];
 	
-	strcpy_s(hh,cc,"ADDR  ");
+	strcpy_s(hh,cc,"ADDR ");
 	int m = address % columns;
 	int z = strlen(hh);
 	for(int f=0,m1=1;f< columns;f++,m1++)
@@ -197,12 +195,26 @@ char* HexHeader2(WORD address, int columns)
 		z++;
 	}
 	hh[z]=0;
-	strcat_s(hh,cc," ZX81");
-	for (int f = 0; f < columns-3; f++)
+	char sz[] = " ZX81 Character Set";
+	char sa[] = "ASCII Character Set";
+	if (columns < 4)
+	{
+		//char sz[] = " ZX";
+		sz[3] = 0;
+	}
+	else if (columns < 18)
+	{
+		//char sz[] = " ZX81";
+		sz[5] = 0;
+	}
+	int l = strlen(sz);
+	strcat_s(hh, cc, sz);
+	for (int f = 0; f < columns - l +2; f++)
 	{
 		strcat_s(hh, cc, " ");
 	}
-	strcat_s(hh,cc,"ASCII\r\n");
+	strcat_s(hh, cc, sa);
+	strcat_s(hh, cc, "\r\n");
 	return hh;
 }
 void doHexDump(char* zxrem,size_t cczxrem,BYTE* in,int ccin,int columns, WORD address)
@@ -253,8 +265,8 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 	char* szHexDump = new char[cczxhexdump]; *szHexDump = 0;
 	char chex[10]; *chex = 0;
 	char hx_line[4 * (8 + 7 + 16 + 4)]; *hx_line = 0;
-	char a[33 + 2];
-	char ts[33 + 2];
+	char a[36 + 2]; //36col
+	char ts[36 + 2];//36col
 	char hx[3];
 	BYTE d;
 	int addcounter = 0;
@@ -274,7 +286,7 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 		* hx_line = 0;
 		strcpy_s(a, " ");
 		strcpy_s(ts, " ");
-		sprintf_s(chex, "%04X  ", address);
+		sprintf_s(chex, "%04X ", address);
 		strcat_s(hx_line, spacer);
 		strcat_s(hx_line, chex);
 		int f;
@@ -340,8 +352,8 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 }
 char* hexdump(BYTE* inputstring, size_t ccin, size_t* lpccout, char* szFileName)
 {
-	int columns = 16;
-	size_t ccw = optionSizeHD(ccin) + (columns / 16 + 1) * HEADERSIZE_HEXDUMP;
+	int columns = 36;
+	size_t ccw = optionSizeHD(ccin) + (columns / 36 + 1) * HEADERSIZE_HEXDUMP;
 
 	char* working = new char[ccw]; *working = 0;
 	strcat_s(working, ccw, GetFileTitle(szFileName));
@@ -358,11 +370,11 @@ char* hexdump(BYTE* inputstring, size_t ccin, size_t* lpccout, char* szFileName)
 	*mcIndent[0] = 0;
 	int cols = 16;
 	int ccs = 3;
-	char sColumns[3];
+	char sColumns[5];
 	GetWindowTextA(g_hwndColumns, sColumns, ccs);
 	cols = atoi(sColumns);
-	if ((cols <1) || (cols >33))
-		cols = 16;
+	if ((cols <1) || (cols >36))
+		cols = 33;
 	if (address > ccin)
 		address = 0;
 	doHexDump(working, ccw, inputstring+address, ccin- address, cols, address);

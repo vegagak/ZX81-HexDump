@@ -1,7 +1,16 @@
 /*
  changes:
 
- ZX81 HexDump 6.5 (2024)
+ ZX81 HexDump 6.5a (2024 11)
+ * Add toolbar button for "Scan for alternate display files" to match the existing menu item
+ * Added RETURN key accelerator for Columns & Starting Address (these setting now auto-refresh on enter)
+ * Validates entries for Columns & Starting Address
+ * Columns limited to 2-36 with + and - buttons added
+ * Added "Reset Address" menu with ESCAPE key accelerator
+ * Added the HexDump checkbox as a styling element
+ * Added tooltip to Re-process button
+
+ ZX81 HexDump 6.5 (2024 10)
  * coded in Win32
  * added variable column view (2-33 columns)
  * added starting address for display
@@ -34,6 +43,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #endif
 
 #define OFFSET 16393 //0x4009
+#define ADDRESS_BASE L"4009"
+WORD address_start = OFFSET;
 
 extern BOOL validatePfile(BYTE* inputstring,size_t ccin,char* outstring, size_t ccout);
 extern DWORD retFileSize3(HANDLE h_File);
@@ -43,6 +54,8 @@ void convert(BYTE* inputstring, size_t ccin, HWND hWnd, char* szFileName);
 BOOL GetFileName(WCHAR* szFileName);
 void ScanForDisplayFiles();
 char* ShowAlternateDisplayFiles(char* is, int ccis);
+void validateMinus();
+void validatePlus();
 
 HWND g_hWndZxdump;
 WCHAR szWindowTitle[MAX_PATH];
@@ -54,7 +67,6 @@ UINT FONT_SIZE_ID = IDM_MENU_MED;
 WCHAR g_szFont[20];
 long g_MED_lfHeight;
 long g_MED_lfWidth;
-_TCHAR szUrlBase[120];
 int status_y;
 HBRUSH hbrBkgnd = NULL;
 HBRUSH hbrBkgnd2 = NULL;
@@ -64,13 +76,17 @@ COLORREF clrLabelText;
 COLORREF clrLabelBkGnd;
 HWND hWndOpen;
 HWND hwndTipGo;
-HWND g_hwndJoinStatic;
+HWND hwndTipCols;
 HWND g_WndStatus;
 HWND g_hwndStartAddr;
 HWND g_hwndColumns;
 HWND g_hwndOPTIONstatic;
 HWND g_hWndExportOpen;
 HMENU g_hMenu;
+HWND g_hwndCHKhexDump;
+HWND g_hWndScanADF;
+HWND g_hWndMinus;
+HWND g_hWndPlus;
 
 #define BTN_OPEN 68
 #define BTN_PROCESS 6
@@ -78,6 +94,9 @@ HMENU g_hMenu;
 #define BTN_EXPORT_OPEN 8
 #define BTN_COMPARE 9
 #define BTN_WINDIFF 10
+#define BTN_MINUS 11
+#define BTN_PLUS 12
+#define BTN_SCANADF 13
 #define BTN_FC 90
 #define MAX_LOADSTRING 100
 #define MAX_WEBPAGE_SIZE 1024*1024
@@ -86,8 +105,7 @@ HMENU g_hMenu;
 BOOL g_ZxFontAvailable;
 HWND hWndExportName;
 HWND hWndPB;
-
-HWND hWndURL;
+WCHAR g_szFileName[MAX_PATH]{ 0 };
 HWND hWndButtonProcess;
 HWND hWndButtonExport;
 HINSTANCE hInst;
@@ -109,6 +127,7 @@ int FileExistCheck(WCHAR* szFileName);
 void OpenMyFile(WCHAR* szFileName);
 DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBufferSize);
 void OnExportOpen();
+void OnResetAddress();
 BOOL GetSaveName(WCHAR* szFileName, WCHAR* lpstrTitle, WCHAR* lpstrDefExt, int Flags, int nFilterIndex);
 BOOL convertToStr(WCHAR* szWide, char* szANSI);
 
@@ -209,7 +228,6 @@ void ResetFields()
 		EnableWindow(g_hWndExportOpen,FALSE);
 		EnableMenuItem(GetMenu(g_hWndZxdump),IDM_MENU_EXPORT,MF_GRAYED);
 }
-			
 //
 //  FUNCTION: MyRegisterClass()
 //
@@ -387,10 +405,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_LBUTTONDOWN:
 		if (HWND(lParam) == g_WndStatus)
 		{
-			//SetFocus(hEdit);
-			x = GET_X_LPARAM(lParam);
-			//int yPos = GET_Y_LPARAM(lParam);
-			// Handle the click position if needed
+			x = GET_X_LPARAM(lParam);			
 		}
 		break;
 	case WM_CTLCOLORSTATIC:
@@ -406,7 +421,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			if (hbrBkgnd == NULL)
 			{
-				//hbrBkgnd = CreateSolidBrush(RGB(0, 0, 0));
 				hbrBkgnd = GetSysColorBrush(COLOR_WINDOW);
 			}
 			return (INT_PTR)hbrBkgnd;
@@ -420,11 +434,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		UpdateWindow(hWnd);
 		break;
 	case WM_CREATE:
-		_tcscpy_s(szUrlBase, TEXT(""));
 		x = COLUMN_1;
 		y = -20;
 		y += ROW_HEIGHT + ROW_SPACING;
 		x = COLUMN_2;
+
+		//ROW ONE
 		ctl_width = 30;
 		hWndOpen = CreateWindow(L"BUTTON", L"Open",
 			BS_BITMAP | WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | SS_LEFT,
@@ -432,14 +447,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			hWnd, (HMENU)BTN_OPEN, hInst, NULL);
 		hBmp = LoadBitmap(hInst, MAKEINTRESOURCE(IDI_OPEN));
 		SendMessage(hWndOpen, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
-
 		hwndTip = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
 			WS_POPUP | TTS_ALWAYSTIP ,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			CW_USEDEFAULT, CW_USEDEFAULT,
 			hWndOpen, NULL,
 			hInst, NULL);
-
 		toolInfo.cbSize = sizeof(toolInfo)-4; //for XP
 		toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
 		toolInfo.hwnd = hWndOpen;
@@ -448,11 +461,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		toolInfo.hinst = hInst;
 		toolInfo.lpszText = L"Open File";
 		toolInfo.lParam = NULL;
-		//toolInfo.lpReserved = NULL;
 		lr = SendMessage(hwndTip, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 
 		x += ctl_width + HORIZONTAL_SPACING;
-
 		ctl_width = 75;
 		hWndButtonExport = CreateWindow(L"BUTTON", (LPCWSTR)L"Export",
 			WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
@@ -464,12 +475,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | SS_LEFT,
 			x, y, ctl_width, ROW_HEIGHT, /* x,y,w,h */
 			hWnd, (HMENU)BTN_EXPORT_OPEN, hInst, NULL);
-		//x += ctl_width + HORIZONTAL_SPACING + 10;
-		x += ctl_width;
-		hWndURL = CreateWindow(L"EDIT", (LPCWSTR)szUrlBase,
-			WS_CHILD | /*WS_VISIBLE | */ WS_BORDER | SS_LEFT | WS_DISABLED,
-			x, y, 530, ROW_HEIGHT, /* x,y,w,h */
-			hWnd, NULL, hInst, NULL);
+		x += ctl_width + 126 + HORIZONTAL_SPACING;
+		ctl_width = 210;
+		g_hWndScanADF = CreateWindow(L"BUTTON", (LPCWSTR)L"Scan for alternate display files",
+			WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | SS_LEFT,
+			x, y, ctl_width, ROW_HEIGHT, /* x,y,w,h */
+			hWnd, (HMENU)BTN_SCANADF, hInst, NULL);
+
+		//ROW TWO
 		x += HORIZONTAL_SPACING;
 		ctl_width = 85;
 					x = COLUMN_2;
@@ -485,38 +498,77 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				x + 5, y + 4, 50, ROW_HEIGHT, /* x,y,w,h */
 				hWnd, NULL, hInst, NULL);
 			x += 50 + HORIZONTAL_SPACING;
+			
 			ctl_width = 100; //sized for 125% fonts
+			x += HORIZONTAL_SPACING;
+			g_hwndCHKhexDump = CreateWindow(L"BUTTON", (LPCWSTR)L"HexDump",
+				WS_TABSTOP | WS_CHILD | BS_CHECKBOX | WS_VISIBLE,
+				x, y, ctl_width, ROW_HEIGHT, hWnd, NULL, /* x,y,w,h */
+				(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
+			Button_SetCheck(g_hwndCHKhexDump, BST_CHECKED);
 			
-			x += ctl_width + 10;//HORIZONTAL_SPACING;
-			ctl_width = 102;
-			
+			x += ctl_width + 116 + HORIZONTAL_SPACING;;
+			ctl_width = 45;
 			CreateWindow(L"STATIC", (LPCWSTR)L"Start: $",
 				WS_CHILD | SS_RIGHT | SS_WHITEFRAME | WS_VISIBLE,
-				x, y+1, 45, ROW_HEIGHT, /* x,y,w,h */
+				x, y+1, ctl_width, ROW_HEIGHT, /* x,y,w,h */
 				hWnd, NULL, hInst, NULL);
-			x += 45 + HORIZONTAL_SPACING;
-			g_hwndStartAddr = CreateWindow(L"EDIT", (LPCWSTR)L"4009",
+			x += ctl_width + 5;
+			ctl_width = 54;
+			g_hwndStartAddr = CreateWindow(L"EDIT", (LPCWSTR)ADDRESS_BASE,
 				WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_WANTRETURN,
 				x, y, ctl_width, ROW_HEIGHT, hWnd, NULL, /* x,y,w,h */
 				(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
-
-			x += ctl_width + HORIZONTAL_SPACING;
+			x += ctl_width + 5;
+			ctl_width = 60;
 			CreateWindow(L"STATIC", (LPCWSTR)L"Columns:",
 				WS_CHILD | SS_RIGHT | SS_WHITEFRAME | WS_VISIBLE,
-				x, y +1, 60, ROW_HEIGHT, /* x,y,w,h */
+				x, y +1, ctl_width, ROW_HEIGHT, /* x,y,w,h */
 				hWnd, NULL, hInst, NULL); 
-			x += 60 + HORIZONTAL_SPACING;
+			x += ctl_width + HORIZONTAL_SPACING;
+			ctl_width = 18;
+			g_hWndMinus = CreateWindow(L"BUTTON", (LPCWSTR)L"-",
+				WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | SS_LEFT,
+				x, y, ctl_width, ROW_HEIGHT, /* x,y,w,h */
+				hWnd, (HMENU)BTN_MINUS, hInst, NULL);
+			x += ctl_width;
+			ctl_width = 36;
 			g_hwndColumns = CreateWindow(L"EDIT", (LPCWSTR)L"33",
 				WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER | ES_WANTRETURN,
 				x, y, ctl_width, ROW_HEIGHT, hWnd, NULL, /* x,y,w,h */
 				(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
+			x += ctl_width;
+			ctl_width = 18;
+			g_hWndPlus = CreateWindow(L"BUTTON", (LPCWSTR)L"+",
+				WS_TABSTOP | WS_CHILD | WS_VISIBLE | WS_BORDER | SS_LEFT,
+				x, y, ctl_width, ROW_HEIGHT, /* x,y,w,h */
+				hWnd, (HMENU)BTN_PLUS, hInst, NULL);
+			hwndTipCols = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+				WS_POPUP | TTS_ALWAYSTIP,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				g_hwndColumns, NULL,
+				hInst, NULL);
+			toolInfo.hwnd = g_hwndColumns;
+			toolInfo.uId = (UINT_PTR)g_hwndColumns;
+			GetClientRect(g_hwndColumns, &toolInfo.rect);
+			toolInfo.lpszText = L"2-33";
+			lr = SendMessage(hwndTipCols, TTM_ADDTOOL, 0, (LPARAM)&toolInfo);
 			
-			x += ctl_width + HORIZONTAL_SPACING;
+			x = 566;
 			ctl_width = 30;
 			hWndButtonProcess = CreateWindow(L"BUTTON", (LPCWSTR)L"Re-process",
 				BS_BITMAP | WS_TABSTOP | WS_VISIBLE | WS_CHILD | WS_BORDER,
 				x, y, ctl_width, ROW_HEIGHT, hWnd, (HMENU)BTN_PROCESS,
 				(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE), NULL);
+			
+			hwndTipGo = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
+				WS_POPUP | TTS_ALWAYSTIP,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				hWndButtonProcess, NULL,
+				hInst, NULL);
+			toolInfo.hwnd = hWndButtonProcess;
 			toolInfo.uId = (UINT_PTR)hWndButtonProcess;
 			GetClientRect(hWndButtonProcess, &toolInfo.rect);
 			toolInfo.lpszText = L"Re-process";
@@ -524,12 +576,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 			hBmpRefresh = LoadBitmap(hInst, MAKEINTRESOURCE(IDI_REFRESH));
 			lr = SendMessage(hWndButtonProcess, BM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmpRefresh);
-			hwndTipGo = CreateWindowEx(NULL, TOOLTIPS_CLASS, NULL,
-				WS_POPUP | TTS_ALWAYSTIP,
-				CW_USEDEFAULT, CW_USEDEFAULT,
-				CW_USEDEFAULT, CW_USEDEFAULT,
-				hWndButtonProcess, NULL,
-				hInst, NULL);
 
 			
 			y += ROW_HEIGHT + ROW_SPACING;
@@ -599,12 +645,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case ID_MODIFY_TEST:
 			OnTest();
 			break;
+		case IDM_MENU_RESET:
+			OnResetAddress();
+			break;
 		case IDM_MENU_REPROCESS:
 		case BTN_PROCESS:			
 			OnProcess();
 			break;
+		case BTN_SCANADF:
+			ScanForDisplayFiles();
+			break;
 		case BTN_EXPORT_OPEN:
 			OnExportOpen();
+			break;
+		case BTN_PLUS:
+			validatePlus();
+			break;
+		case BTN_MINUS:
+			validateMinus();
 			break;
 		case IDM_MENU_EXPORT:
 		case BTN_EXPORT:
@@ -765,15 +823,13 @@ BOOL GetFileName(WCHAR* szFileName)
 }
 void OpenMyFile(WCHAR* szFileName)	
 {	
-	SetWindowText(hWndURL, szFileName);
+	wcscpy_s(g_szFileName, MAX_PATH, szFileName);
 
 	LPWSTR  lpc = PathFindFileName(szFileName);
 
-	//WCHAR szWindowName[MAX_PATH];
 	LoadString(hInst, IDS_APP_TITLE, szWindowTitle,MAX_PATH);
 	WCHAR szNewWindowName[MAX_PATH];
 	_stprintf_s(szNewWindowName, MAX_PATH, TEXT("%s - %s"), lpc, szWindowTitle);
-	//SetWindowText(g_hWndZxdump, szNewWindowName);
 	SendMessage(g_hWndZxdump, WM_SETTEXT, 0, (LPARAM)szNewWindowName);
 
 	ResetFields();
@@ -796,10 +852,7 @@ DWORD WINAPI ThreadOpenFile(LPVOID lpParameter)
 DWORD WINAPI ThreadProcess(LPVOID lpParameter)
 {
 	UNREFERENCED_PARAMETER(lpParameter);
-	WCHAR szFileName[MAX_PATH];
-	GetWindowText(hWndURL,szFileName,MAX_PATH);
-	GetWindowText(hWndURL,szFileName,MAX_PATH);
-	if(*szFileName==0)
+	if(*g_szFileName == 0)
 	{
 		SetWindowText(g_WndStatus,L"Open a file first");
 		return 1;
@@ -807,11 +860,11 @@ DWORD WINAPI ThreadProcess(LPVOID lpParameter)
 	DWORD dw = 64*1024;
 	char* inputstring = new char[dw];
 
-	int n = DownloadFileToBufferSafe(szFileName,inputstring,&dw);
+	int n = DownloadFileToBufferSafe(g_szFileName,inputstring,&dw);
 	if (n)
 	{
 		char sFileName[MAX_PATH];	
-		convertToStr(szFileName,sFileName);
+		convertToStr(g_szFileName,sFileName);
 
 		
 #ifdef _DEBUG
@@ -873,7 +926,7 @@ void OnButtonExport()
 	GetWindowText(hWndExportName, szFilePath, MAX_PATH);
 	if (*szFilePath == 0)
 	{
-		GetWindowText(hWndURL, szFilePath, MAX_PATH);
+		wcscpy_s(szFilePath, MAX_PATH, g_szFileName);
 	}
 	LPCWSTR lpe = PathFindExtension(szFilePath);
 	szFilePath[lpe - szFilePath] = 0;
@@ -989,21 +1042,24 @@ void convert(BYTE* bs, size_t cbbs, HWND hWnd, char* szFileName)
 {
 	size_t ccout = 0;
 	char* outstring = hexdump(bs,cbbs,&ccout,szFileName);
+	size_t length = strlen(outstring);
+	//do not show last CrLf
+	if (outstring[length - 2] == '\r')
+	{
+		outstring[length - 2] = 0;
+	}
 	SetWindowTextA(hWnd,outstring);
 	delete [] outstring;
 	SetFocus(g_WndStatus);
 }
 void ScanForDisplayFiles()
 {
-	WCHAR szArg[MAX_PATH];
-	GetWindowText(hWndURL, szArg, MAX_PATH);
-
-	DWORD dwExists = GetFileAttributes(szArg);
+	DWORD dwExists = GetFileAttributes(g_szFileName);
 	if (dwExists == 0xFFFFFFFF) {
-		MessageBox(g_hWndZxdump, L"File not found.", szArg, MB_OK);
+		MessageBox(g_hWndZxdump, L"File not found.", g_szFileName, MB_OK);
 		return;
 	}
-	HANDLE hFile_htm = CreateFile(szArg, GENERIC_READ, FILE_SHARE_READ, NULL,
+	HANDLE hFile_htm = CreateFile(g_szFileName, GENERIC_READ, FILE_SHARE_READ, NULL,
 		OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (hFile_htm == INVALID_HANDLE_VALUE) {
 		MessageBox(g_hWndZxdump, L"INVALID_HANDLE_VALUE", L"CreateFile", MB_OK);
@@ -1019,7 +1075,7 @@ void ScanForDisplayFiles()
 	char* inputstring = new char[dwFS_low + 1];
 	char* s = 0;
 
-	int n = DownloadFileToBufferSafe(szArg, inputstring, &dwFS_low);
+	int n = DownloadFileToBufferSafe(g_szFileName, inputstring, &dwFS_low);
 	if (n)
 	{
 		size_t cctemp = 120;	// size of SYSTEM VARS + 4
@@ -1029,9 +1085,7 @@ void ScanForDisplayFiles()
 		if (b)
 		{
 			VERSN = DetectVersion((BYTE*)inputstring);
-
 			s = ShowAlternateDisplayFiles(inputstring,n);
-			SetWindowTextA(g_WndStatus, inputstring);
 			SetWindowTextA(g_WndStatus, s);
 			if (s)
 				delete s;
@@ -1041,4 +1095,40 @@ void ScanForDisplayFiles()
 		}
 	}
 	delete inputstring;
+}
+void validatePlus()
+{
+	char sColumns[5];
+	int ccs = 5;
+	GetWindowTextA(g_hwndColumns, sColumns, ccs);
+	int cols = atoi(sColumns);
+	if (cols < 36)
+	{
+		cols++;
+		sprintf_s(sColumns, ccs, "%i", cols);
+		SetWindowTextA(g_hwndColumns, sColumns);
+		OnProcess();
+	}
+}
+void validateMinus()
+{
+	char sColumns[5];
+	int ccs = 5;
+	GetWindowTextA(g_hwndColumns, sColumns, ccs);
+	int cols = atoi(sColumns);
+	if (cols > 2)
+	{
+		cols--;
+		sprintf_s(sColumns, ccs, "%i", cols);
+		SetWindowTextA(g_hwndColumns, sColumns);
+		OnProcess();
+	}
+}
+void OnResetAddress()
+{
+	char s[7];
+	int ccs = 7;
+	sprintf_s(s, ccs, "%04X", address_start);
+	SetWindowTextA(g_hwndStartAddr, s);
+	OnProcess();
 }
