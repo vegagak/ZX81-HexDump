@@ -19,6 +19,7 @@
 #define IDM_MENU_OPEN                   114
 #define IDM_MENU_REPROCESS              115
 #define IDM_MENU_EXPORT                 116
+#define IDM_MENU_RESET                  117
 #define IDI_OPEN                        124
 #define IDI_REFRESH                     125
 #define IDR_MAINFRAME                   128
