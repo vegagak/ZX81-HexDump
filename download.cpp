@@ -52,12 +52,9 @@ DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBuffer
 	BOOL bSuccess;
 	DWORD dwTotal = 0;
 	dwBytesRead = 1;
-	while(dwBytesRead)
-	{
-		bSuccess= ReadFile (hFile_htm, szBufferA, 
-			dwFS_low, &dwBytesRead, NULL);
-		dwTotal += dwBytesRead;
-	}
+	bSuccess= ReadFile (hFile_htm, szBufferA, 
+		dwFS_low, &dwBytesRead, NULL);
+	dwTotal += dwBytesRead;
 	CloseHandle(hFile_htm);
 	dwBytesRead = dwTotal;
 	if (bSuccess && (dwBytesRead>0))
