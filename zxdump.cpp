@@ -331,7 +331,7 @@ char* getBS(WCHAR* szFileName,int* cb)
 		return FALSE;
 	DWORD dwFS_low = retFileSize3(hFile_htm);
 	CloseHandle(hFile_htm);
-	if( dwFS_low == 0xFFFFFFFF)
+	if( dwFS_low == INVALID_FILE_SIZE)
 		return FALSE;
 	
 	char* bs1 = new char[dwFS_low+1];
@@ -1067,7 +1067,7 @@ void ScanForDisplayFiles()
 	}
 	DWORD dwFS_low = retFileSize3(hFile_htm);
 	CloseHandle(hFile_htm);
-	if (dwFS_low == 0xFFFFFFFF) {
+	if (dwFS_low == INVALID_FILE_SIZE) {
 		MessageBox(g_hWndZxdump, L"ERROR_INSUFFICIENT_BUFFER", L"disableAutorun()", MB_OK);
 		return;
 	}
