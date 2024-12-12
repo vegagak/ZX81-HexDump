@@ -27,7 +27,7 @@ DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBuffer
 		return 0;
 	}
 	DWORD dwFS_low = retFileSize3(hFile_htm);
-	if( dwFS_low == 0xFFFFFFFF)
+	if( dwFS_low == INVALID_FILE_SIZE)
 	{
 		CloseHandle(hFile_htm);
 		SetLastError(ERROR_INSUFFICIENT_BUFFER);
@@ -45,24 +45,19 @@ DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBuffer
 	if(!szBufferA)
 	{
 		//MessageBox(NULL, TEXT("ERROR_NOT_ENOUGH_MEMORY"),TEXT("DownloadFileToBufferSafe"),MB_OK);
-		_sntprintf_s(myErrString,(sizeof(myErrString)/sizeof(_TCHAR)) - 1, TEXT("ERROR_NOT_ENOUGH_MEMORY - DownloadFileToBufferSafe\r\n"));
 		SetLastError(ERROR_NOT_ENOUGH_MEMORY);
 		return 0;
 	}
-	BOOL bSuccess;
-	DWORD dwTotal = 0;
-	dwBytesRead = 1;
-	bSuccess= ReadFile (hFile_htm, szBufferA, 
-		dwFS_low, &dwBytesRead, NULL);
-	dwTotal += dwBytesRead;
+
+	BOOL bSuccess = ReadFile(hFile_htm, szBufferA, dwFS_low, &dwBytesRead, NULL);
 	CloseHandle(hFile_htm);
-	dwBytesRead = dwTotal;
-	if (bSuccess && (dwBytesRead>0))
+
+	if (bSuccess && (dwBytesRead == dwFS_low))
 	{
 		//success
 		memcpy(szBuffer,szBufferA,dwBytesRead);
 	}
-	else if ((dwBytesRead != 0))
+	else
 	{
 		//failure
 		_sntprintf_s(myErrString,(sizeof(myErrString)/sizeof(_TCHAR)) - 1, TEXT("Error %d reading file: %s"), GetLastError(), szFileName);
@@ -70,33 +65,30 @@ DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBuffer
 		OutputDebugString(TEXT("*** failed to read local File\n"));
 		dwBytesRead = 0;
 	}
-	else
-	{
-		// 0 bytes read from file. OK, file is 0 bytes in size
-	}
 	delete [] szBufferA;
 	return dwBytesRead;
 }
 DWORD retFileSize3(HANDLE h_File)
-{	//return: bytes, or 0xFFFFFFFF = failure
+{	//return: bytes, or INVALID_FILE_SIZE
+	_TCHAR myErrString[300];
 	if(!h_File)
 	{
 		SetLastError(ERROR_INVALID_HANDLE);
-		return 0xFFFFFFFF;
+		return INVALID_FILE_SIZE;
 	}
-	DWORD dwHigh = 0;
-	LPDWORD lpFileSizeHigh = &dwHigh;
-	DWORD dwLow = GetFileSize(h_File,lpFileSizeHigh);
-	if( (dwLow == 0xFFFFFFFF) && (GetLastError() != NO_ERROR) )
-	{   //technically this means the file size is 0xFFFFFFFF bytes
-							//  we don't handle files that big
-		return 0xFFFFFFFF;
-	}
-	if(*lpFileSizeHigh) // > 4GB, we don't handle files that big
+	LARGE_INTEGER fileSize;
+	PLARGE_INTEGER lpFileSize = &fileSize;
+	if(!GetFileSizeEx(h_File, lpFileSize))
 	{
-		return 0xFFFFFFFF;
+		_sntprintf_s(myErrString, (sizeof(myErrString) / sizeof(_TCHAR)) - 1, TEXT("Error %d reading file size"), GetLastError());
+		//MessageBox(NULL, myErrString,TEXT("retFileSize3"),MB_OK);
+		return INVALID_FILE_SIZE;
 	}
-	return dwLow;
+	if (fileSize.HighPart > 0)
+	{
+		return INVALID_FILE_SIZE;
+	}
+	return fileSize.LowPart;
 }
 int FileExistCheckEx(HWND hWnd,WCHAR* szFileName)
 {	// return IDNO if file should not be overwritten
