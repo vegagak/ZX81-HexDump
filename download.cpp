@@ -1,8 +1,6 @@
 #include "stdafx.h"
 
-DWORD retFileSize3(HANDLE h_File);
-int FileExistCheckEx(HWND hWnd,WCHAR* szFileName);
-DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBufferSize);
+#include "download.h"
 
 DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBufferSize)
 {	// szFileName: file name to open, return contents in szBuffer
@@ -12,7 +10,7 @@ DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBuffer
 	SetLastError(ERROR_SUCCESS); // for reading 0 bytes
 	//check to make sure file already exists
 	DWORD dwExists = GetFileAttributes(szFileName);
-	if(dwExists == 0xFFFFFFFF)
+	if(dwExists == INVALID_FILE_ATTRIBUTES)
 	{
 		_stprintf_s(myErrString,TEXT("ERROR_FILE_NOT_FOUND:\n\n%s"),szFileName);
 		SetLastError(ERROR_FILE_NOT_FOUND);

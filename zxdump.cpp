@@ -22,7 +22,6 @@
 */
 
 #include "stdafx.h"
-#include "zxdump.h"
 #include <tchar.h>
 #include <stdio.h>
 #include <assert.h>
@@ -32,6 +31,10 @@
 #include <shellapi.h>
 #include <shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
+
+#include "zxdump.h"
+#include "basictypes.h"
+#include "download.h"
 
 #define darkmode_
 #ifdef darkmode_
@@ -46,9 +49,8 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 #define ADDRESS_BASE L"4009"
 WORD address_start = OFFSET;
 
-extern BOOL validatePfile(BYTE* inputstring,size_t ccin,char* outstring, size_t ccout);
-extern DWORD retFileSize3(HANDLE h_File);
-extern int DetectVersion(BYTE* bytestream);
+BOOL validatePfile(BYTE* inputstring,size_t ccin,char* outstring, size_t ccout);
+int DetectVersion(BYTE* bytestream);
 
 void convert(BYTE* inputstring, size_t ccin, HWND hWnd, char* szFileName);
 BOOL GetFileName(WCHAR* szFileName);
@@ -77,6 +79,7 @@ COLORREF clrLabelBkGnd;
 HWND hWndOpen;
 HWND hwndTipGo;
 HWND hwndTipCols;
+HWND g_hWnd;
 HWND g_WndStatus;
 HWND g_hwndStartAddr;
 HWND g_hwndColumns;
@@ -125,7 +128,6 @@ void OnOpen();
 DWORD WINAPI ThreadProcess(LPVOID lpParameter);
 int FileExistCheck(WCHAR* szFileName);
 void OpenMyFile(WCHAR* szFileName);
-DWORD DownloadFileToBufferSafe(WCHAR* szFileName,char* szBuffer, DWORD* dwBufferSize);
 void OnExportOpen();
 void OnResetAddress();
 BOOL GetSaveName(WCHAR* szFileName, WCHAR* lpstrTitle, WCHAR* lpstrDefExt, int Flags, int nFilterIndex);
@@ -156,7 +158,7 @@ void args()
 {
 	 LPWSTR *szArgList; 
 	 int argCount; 
-	 WCHAR szArg[MAX_PATH]; *szArg= 0;
+	 WCHAR szArg[MAX_PATH] = { 0 };
 	 //UpdateWindow(hWnd);
 
      szArgList = CommandLineToArgvW(GetCommandLine(), &argCount); 
@@ -169,10 +171,10 @@ void args()
 	 if(*szArg != 0)
 		OpenMyFile(szArg);
 }
-int APIENTRY _tWinMain(HINSTANCE hInstance,
-                     HINSTANCE hPrevInstance,
-                     LPTSTR    lpCmdLine,
-                     int       nCmdShow)
+int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
+					 _In_opt_ HINSTANCE hPrevInstance,
+					 _In_ LPTSTR    lpCmdLine,
+					 _In_ int       nCmdShow)
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
@@ -243,7 +245,7 @@ void ResetFields()
 //
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
-	WNDCLASSEX wcex;
+	WNDCLASSEX wcex = { 0 };
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
@@ -339,8 +341,7 @@ char* getBS(WCHAR* szFileName,int* cb)
 	int n = DownloadFileToBufferSafe(szFileName,bs1,&dwFS_low);
 	if (n == 0)
 	{
-		delete bs1;
-		bs1 = 0;
+		bs1 = NULL;
 	}
 	*cb = n;
 	return bs1;
@@ -767,7 +768,7 @@ BOOL convertToStr(WCHAR* szWide, char* szANSI)
 BOOL GetSaveName(WCHAR* szFileName, WCHAR* lpstrTitle, WCHAR* lpstrDefExt, int Flags, int nFilterIndex)
 {
 	OPENFILENAME ofn;       // common dialog box structure
-	WCHAR szFile[MAX_PATH];
+	WCHAR szFile[MAX_PATH] = { 0 };
 
 	// Initialize OPENFILENAME
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -796,7 +797,7 @@ BOOL GetSaveName(WCHAR* szFileName, WCHAR* lpstrTitle, WCHAR* lpstrDefExt, int F
 BOOL GetFileName(WCHAR* szFileName)
 {
 	OPENFILENAME ofn;       // common dialog box structure
-	WCHAR szFile[MAX_PATH];
+	WCHAR szFile[MAX_PATH] = { 0 };
 
 	// Initialize OPENFILENAME
 	ZeroMemory(&ofn, sizeof(ofn));
@@ -905,9 +906,9 @@ void OnOpen()
 }
 void OnProcess()
 {
-	DWORD selStart;
-	DWORD selEnd;
-	LRESULT result = SendMessage(g_WndStatus, EM_GETSEL, (WPARAM) & selStart, (LPARAM) & selEnd);
+	DWORD selStart = 0;
+	DWORD selEnd = 0;
+	LRESULT result = SendMessage(g_WndStatus, EM_GETSEL, (WPARAM) &selStart, (LPARAM) &selEnd);
 	DWORD dwThreadID = 0;
 	CreateThread(NULL,0,ThreadProcess,0,0,&dwThreadID);
 }
@@ -921,7 +922,7 @@ void OnExportOpen()
 }
 void OnButtonExport()
 {
-	WCHAR szFileName[MAX_PATH]; *szFileName = 0;
+	WCHAR szFileName[MAX_PATH] = { 0 };
 	WCHAR szFilePath[MAX_PATH]; 
 	GetWindowText(hWndExportName, szFilePath, MAX_PATH);
 	if (*szFilePath == 0)
@@ -936,7 +937,7 @@ void OnButtonExport()
 	
 	GetSaveName(szFileName, L"Save file As", L"txt", OFN_PATHMUSTEXIST | OFN_OVERWRITEPROMPT, 1);
 
-	WCHAR wOutname[MAX_PATH];
+	WCHAR wOutname[MAX_PATH] = { 0 };
 	wcscpy_s(wOutname, szFileName);
 
 	int i = GetWindowTextLength(g_WndStatus);
@@ -974,7 +975,7 @@ int FilePathExistQz(IN OUT _TCHAR* szPath, const size_t sizePath, HWND hWnd)
 	d = GetFileAttributes (szPath);
 	if( d == -1 ) 
 	{
-		LPVOID lpMsgBuf;
+		LPVOID lpMsgBuf = 0;
 
 		d = GetLastError();
 		FormatMessage( 
@@ -1081,7 +1082,6 @@ void ScanForDisplayFiles()
 		size_t cctemp = 120;	// size of SYSTEM VARS + 4
 		char* working = new char[cctemp]; *working = 0;
 		BOOL b = validatePfile((BYTE*)inputstring, dwFS_low, working, cctemp);
-		delete working;
 		if (b)
 		{
 			VERSN = DetectVersion((BYTE*)inputstring);
@@ -1094,7 +1094,6 @@ void ScanForDisplayFiles()
 			SetWindowTextA(g_WndStatus, inputstring);
 		}
 	}
-	delete inputstring;
 }
 void validatePlus()
 {
