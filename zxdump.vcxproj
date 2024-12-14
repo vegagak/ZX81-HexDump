@@ -126,6 +126,8 @@
     <ClCompile Include="zx81s.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="basictypes.h" />
+    <ClInclude Include="download.h" />
     <ClInclude Include="zxdump.h" />
     <ClInclude Include="L83.h" />
     <ClInclude Include="Resource.h" />

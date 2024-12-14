@@ -2,8 +2,16 @@
 #include "zx81s.h"
 #include "L83.h"
 
+#define HEADERSIZE_HEXDUMP 135
+
+#define PROGRAM 16509			//407D
+#define offset 16393			//4009
+#define program 16509 - offset  //116
+
 //host app will supply these GUI items
 extern HWND hWndExportName; // text window for status updates
+char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BOOL bShowStatus);
+BYTE GetSysByte(WORD _offset, BYTE* p_stream);
 int FileExistCheckEx(HWND hWnd,WCHAR* szFileName);
 
 char (*code2ascii)[11];
@@ -45,7 +53,7 @@ BOOL convertToWide2(size_t* lenW, WCHAR* szWide,char* szANSI)
 }
 void GetFileNameOut(char* szFileName,char* outname,WCHAR* wOutname)
 {
-	char FilePath[MAX_PATH]; *FilePath=0;
+	char FilePath[MAX_PATH] = { 0 };
 	if(szFileName)
 	{
 		char* p = strrchr(szFileName,'\\');
@@ -99,7 +107,7 @@ int DetectVersion(BYTE* bytestream)
 		}
 	}
 	else {
-		char s[4]; *s = 0;
+		char s[4] = { 0 };
 		sprintf_s(s, "%d", versn);
 		MessageBoxA(g_hWnd, s, "Version", MB_OK | MB_ICONEXCLAMATION);
 	}
@@ -251,7 +259,6 @@ void doHexDump(char* zxrem,size_t cczxrem,BYTE* in,int ccin,int columns, WORD ad
 	delete ss;
 	
 	strcat_s(zxrem, cczxrem, hexdump);
-	delete hexdump;
 }
 BOOL IsZXstandard(BYTE byte)
 {
@@ -263,8 +270,8 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 {
 	size_t cczxhexdump = 20 + optionSizeHD(cbbs);
 	char* szHexDump = new char[cczxhexdump]; *szHexDump = 0;
-	char chex[10]; *chex = 0;
-	char hx_line[4 * (8 + 7 + 16 + 4)]; *hx_line = 0;
+	char chex[10] = { 0 };
+	char hx_line[4 * (8 + 7 + 16 + 4)] = { 0 };
 	char a[36 + 2]; //36col
 	char ts[36 + 2];//36col
 	char hx[3];
@@ -272,7 +279,7 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 	int addcounter = 0;
 	while (addcounter < cbbs)
 	{
-		WCHAR sz[67];
+		WCHAR sz[67] = { 0 };
 		if (bShowStatus)
 		{
 			_stprintf_s(sz, L"Hex Dump: %d bytes of %d", addcounter, cbbs);
@@ -313,9 +320,7 @@ char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns, WORD address, BO
 			//'get char from ASCII Char Set
 			if (((d > 31) && (d < 0x7f)) || (d >= 0xA0))
 			{
-				char as[2];
-				as[0] = d;
-				as[1] = 0;
+				char as[2] = { (char)d, 0 };
 				strcat_s(a, as);
 			}
 			else
@@ -404,9 +409,9 @@ void doDBZXdisplayfile(char* s, size_t ccs, BYTE* in, int ccin, int columns, int
 {
 	char sl[] = "L4023:";
 	size_t slcc = strlen(sl)+1;
-	char zxs[11]; *zxs = 0;
+	char zxs[11] = { 0 };
 	size_t zxscc = 11;
-	int d;
+	int d = 0;
 	int z = 1;
 	for (int b = 0; b < rows; b++)
 	{
@@ -469,7 +474,7 @@ char* ShowAlternateDisplayFiles(char* is, int ccis)
 				strcat_s(s, ccs, "\r\n");
 			char ss[] = "      // 439B  76 possible display file found\r\n";
 			int ccss = strlen(ss) + 1;
-			sprintf_s(ss, ccss, "%s%04X  76 possible display file found\r\n", mcIndent, f + offset);
+			sprintf_s(ss, ccss, "%s%04X  76 possible display file found\r\n", mcIndent[1], f + offset);
 			strcat_s(s, ccs, ss);
 
 			int myrows = 24;

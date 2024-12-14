@@ -1,5 +1,5 @@
 #pragma once
-#include "zx81s.h"
+#include "basictypes.h"
 
 zx81vars L83vars[] = {
 	1,"VERSN    ",0,

@@ -1,30 +1,9 @@
 #pragma once
-
-#define HEADERSIZE_HEXDUMP 135
-
-#define PROGRAM 16509			//407D
-#define offset 16393			//4009
-#define program 16509 - offset  //116
-
-HWND g_hWnd;
-extern HWND g_hwndStartAddr;
-extern HWND g_hwndColumns;
-
-
-char* zxhexdumpX(BYTE* bs, int cbbs, char* spacer, int columns , WORD address, BOOL bShowStatus);
-char* hexdump (BYTE* inputstring,size_t ccin, size_t* lpccout,char* szFileName);
-BYTE GetSysByte(WORD _offset, BYTE* p_stream);
+#include "basictypes.h"
 
 char mcIndent[][10] = {
 	"      // ",
-	"      "};
-
-typedef struct zx81vars
-{
-	BYTE bytes;
-	char name[10];
-	WORD addr;
-}zx81vars;
+	"      " };
 
 zx81vars zxvars[] = {
 	1,"VERSN    ",0,
@@ -61,7 +40,7 @@ zx81vars zxvars[] = {
 	1,"CDFLAG   ",0,
    33,"PRBUFF   ",16444,
    25,"MEMBOT   ",16477,
-    5,"MEM_5    ",16502,
+	5,"MEM_5    ",16502,
 	2,"UNUSED2  ",16507,
   255,0,0
 };
@@ -322,12 +301,7 @@ char zx2ascii[][11] = {
 "UNPLOT ",
 "CLEAR ",
 "RETURN ",
-"COPY "};
-
-struct charcodes {
-	int number;
-	char text[11];
-};
+"COPY " };
 
 charcodes ZX81charcodes[]{
 0, "",
@@ -585,4 +559,4 @@ charcodes ZX81charcodes[]{
 2, "ZX_UNPLOT",
 2, "ZX_CLEAR",
 2, "ZX_RETURN",
-2, "ZX_COPY"};
+2, "ZX_COPY" };
